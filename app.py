@@ -2,7 +2,8 @@
 import streamlit as st
 import pandas as pd
 import fantacalcio  # Assicurati che fantacalcio.py sia nella stessa cartella
-
+def evidenzia_primo(val):
+    return "background-color: #1e3a5f; color: #f0f0f0; font-weight: bold;" if pd.notna(val) else ""
 # CONFIGURAZIONE
 st.set_page_config(page_title="Fantacalcio App", page_icon="⚽", layout="centered")
 st.title("⚽ Fantacalcio Analyzer")
@@ -193,3 +194,28 @@ except FileNotFoundError:
     st.error("⚠️ Il file 'Output_Fantacalcio_Classico.xlsx' non è stato trovato.")
 except Exception as e:
     st.error(f"❌ Errore nel caricamento dei dati: {e}")
+# 📌 Sezione Rigoristi
+st.header("🎯 Rigoristi delle Squadre")
+
+try:
+    rigoristi_df = pd.read_excel("Rigoristi.xlsx")
+
+    # 🔍 Filtro per squadra
+    squadre_rigoristi = sorted(rigoristi_df["Squadra"].dropna().unique().tolist())
+    squadra_rig_scelta = st.selectbox("Seleziona una squadra", ["TUTTI"] + squadre_rigoristi)
+
+    if squadra_rig_scelta != "TUTTI":
+        rigoristi_df = rigoristi_df[rigoristi_df["Squadra"] == squadra_rig_scelta]
+
+    # 🎨 Stile per evidenziare il primo rigorista
+    def evidenzia_primo(val):
+        return "background-color: #ffe599; font-weight: bold;" if pd.notna(val) else ""
+
+    styled_df = rigoristi_df.style.applymap(evidenzia_primo, subset=["Rigorista 1"])
+    st.write("🎯 Tabella Rigoristi con evidenziazione del primo:")
+    st.write(styled_df)
+
+except FileNotFoundError:
+    st.warning("⚠️ Il file 'Rigoristi.xlsx' non è stato trovato.")
+except Exception as e:
+    st.error(f"❌ Errore nel caricamento dei rigoristi: {e}")
