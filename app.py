@@ -1,4 +1,4 @@
-# streamlit run fantacalcio_app.py AVVIO PROGRAMMA
+# streamlit run app.py AVVIO PROGRAMMA
 import streamlit as st
 import pandas as pd
 import fantacalcio  # Assicurati che fantacalcio.py sia nella stessa cartella
@@ -21,10 +21,41 @@ if st.button("🔁 Esegui Analisi Fantacalcio"):
 # 📊 Visualizza fogli per ruolo + griglia con filtro squadra
 try:
     fogli = pd.read_excel(FILE_OUTPUT, sheet_name=None)
+    # Barra di ricerca globale (sopra tutto)
+    search_global = st.text_input("🔎 Cerca giocatore (globale):").strip()
+
+# Se viene inserito un nome globale
+    if search_global:
+        risultati = []
+        visti = set()   # per evitare duplicati totali
+
+        for nome_foglio, df in fogli.items():
+            if "Nome" in df.columns:
+                filtrato = df[df["Nome"].str.contains(search_global, case=False, na=False)]
+                if not filtrato.empty:
+                    for _, row in filtrato.iterrows():
+                        nome_giocatore = row["Nome"]
+                        if nome_giocatore not in visti:
+                        # usiamo una serie convertita in DataFrame singola riga
+                            singola_riga = row.to_frame().T
+                            singola_riga["Ruolo_Foglio"] = nome_foglio
+                            risultati.append(singola_riga)
+                            visti.add(nome_giocatore)
+
+        if risultati:
+            risultati_df = pd.concat(risultati)
+            st.subheader("🔍 Risultati ricerca globale (senza duplicati)")
+            st.dataframe(risultati_df.reset_index(drop=True))
+        else:
+            st.info("Nessun giocatore trovato.")
+
+        st.stop()
+
     if fogli:
         st.markdown("### 📂 Seleziona il foglio da visualizzare")
         ruolo_scelto = st.selectbox("Ruolo o griglia", list(fogli.keys()))
         df_selezionato = fogli[ruolo_scelto]
+        
 
         st.subheader(f"📋 Dati: {ruolo_scelto}")
 
