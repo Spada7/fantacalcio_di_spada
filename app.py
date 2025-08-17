@@ -1,0 +1,164 @@
+# streamlit run fantacalcio_app.py AVVIO PROGRAMMA
+import streamlit as st
+import pandas as pd
+import fantacalcio  # Assicurati che fantacalcio.py sia nella stessa cartella
+
+# CONFIGURAZIONE
+st.set_page_config(page_title="Fantacalcio App", page_icon="⚽", layout="centered")
+st.title("⚽ Fantacalcio Analyzer")
+
+# 📁 Nomi dei file
+FILE_OUTPUT = "Output_Fantacalcio_Classico.xlsx"
+
+# 🔁 Esegui lo script fantacalcio.py e ricarica i fogli
+if st.button("🔁 Esegui Analisi Fantacalcio"):
+    try:
+        fantacalcio.main()
+        st.success("✅ Analisi completata!")
+    except Exception as e:
+        st.error(f"❌ Errore nell'esecuzione: {e}")
+
+# 📊 Visualizza fogli per ruolo + griglia con filtro squadra
+try:
+    fogli = pd.read_excel(FILE_OUTPUT, sheet_name=None)
+    if fogli:
+        st.markdown("### 📂 Seleziona il foglio da visualizzare")
+        ruolo_scelto = st.selectbox("Ruolo o griglia", list(fogli.keys()))
+        df_selezionato = fogli[ruolo_scelto]
+
+        st.subheader(f"📋 Dati: {ruolo_scelto}")
+
+        # 🔍 Filtro per squadra con "TUTTI"
+        if "Squadra" in df_selezionato.columns:
+            df_selezionato["Squadra"] = df_selezionato["Squadra"].astype(str)
+            squadre = sorted(df_selezionato["Squadra"].dropna().unique().tolist())
+            opzioni_squadra = ["TUTTI"] + squadre
+            squadra_scelta = st.selectbox("🏷️ Filtra per squadra", opzioni_squadra)
+
+            if squadra_scelta != "TUTTI":
+                df_selezionato = df_selezionato[df_selezionato["Squadra"] == squadra_scelta]
+
+        # 🎨 Stile per Griglia Portieri
+        if ruolo_scelto == "Griglia Portieri":
+            def stile_griglia(val):
+                try:
+                    num = float(val)
+                    if num == 0:
+                        return "color: green; background-color: rgba(144,238,144,0.3);"
+                    elif 1 <= num <= 8:
+                        return "color: #00f7ff;"
+                except:
+                    return ""
+                return ""
+
+            st.markdown("### 🧤 Legenda colori")
+            st.markdown("""
+            - 🟩 **Verde + sfondo trasparente**: numero **0** (portiere non utilizzato)
+            - 🔵 **Blu fluo**: numeri da **1 a 8** (presenze o punteggi rilevanti)
+            - ⚪️ Nessuna modifica: altri valori
+            """)
+
+            styled_df = df_selezionato.style.applymap(stile_griglia)
+            st.dataframe(styled_df)
+        else:
+            st.dataframe(df_selezionato)
+    else:
+        st.warning("⚠️ Il file Excel non contiene fogli.")
+except FileNotFoundError:
+    st.warning("⚠️ Il file Excel non è stato trovato. Esegui prima l'analisi.")
+except Exception as e:
+    st.warning(f"⚠️ Errore nella lettura del file: {e}")
+
+st.markdown("---")
+
+
+# Sezione Statistiche per Ruolo
+st.header("📊 Statistiche per Ruolo")
+
+ruolo = st.selectbox("Seleziona il ruolo", ["Portieri", "Difensori", "Centrocampisti", "Attaccanti"])
+
+try:
+    df = pd.read_excel("Output_Fantacalcio_Classico.xlsx", sheet_name=None)  # Assicurati che il path sia corretto
+    
+    if ruolo == "Portieri":
+        df = df["Portieri"]
+        st.subheader("🧤 Portieri per MV e FM")
+
+        # Slider per numero minimo di partite a voto
+        min_pv = st.slider("Numero minimo di partite a voto (Pv)", min_value=1, max_value=38, value=20)
+
+        # Slider per numero di portieri da visualizzare
+        num_portieri = st.slider("Quanti portieri vuoi visualizzare?", min_value=1, max_value=20, value=10)
+
+        # Filtra portieri con almeno 'min_pv' partite
+        portieri = df[(df['Ruolo'] == 'P') & (df['Pv'] >= min_pv)]
+
+        # Ordina per MV e FM e prendi i primi N
+        top_portieri = portieri.sort_values(by=["Mv", "Fm"], ascending=False).head(num_portieri)
+
+        # Seleziona solo le colonne richieste
+        colonne_mostrate = ['Nome','Squadra', 'Mv', 'Fm', 'Rp', 'Au', 'Gs', 'Pv']
+        st.dataframe(top_portieri[colonne_mostrate].reset_index(drop=True))
+    elif ruolo == "Difensori":
+        df = df["Difensori"]
+        st.subheader("🧤 Difensori per MV e FM")
+
+        # Slider per numero minimo di partite a voto
+        min_pv = st.slider("Numero minimo di partite a voto (Pv)", min_value=1, max_value=38, value=20)
+
+        # Slider per numero di difensori da visualizzare
+        num_difensori = st.slider("Quanti portieri vuoi visualizzare?", min_value=1, max_value=50, value=10)
+
+        # Filtra portieri con almeno 'min_pv' partite
+        difensori = df[(df['Ruolo'] == 'D') & (df['Pv'] >= min_pv)]
+
+        # Ordina per MV e FM e prendi i primi N
+        top_difensori = difensori.sort_values(by=["Mv", "Fm"], ascending=False).head(num_difensori)
+
+        # Seleziona solo le colonne richieste
+        colonne_mostrate = ['Nome', 'Squadra', 'Mv', 'Fm', 'Gf', 'Amm', 'Esp', 'Pv','Au']
+        st.dataframe(top_difensori[colonne_mostrate].reset_index(drop=True))
+    elif ruolo == "Centrocampisti":
+        df = df["Centrocampisti"]
+        st.subheader("🎯 Centrocampisti per MV e FM")
+
+    # Slider per numero minimo di partite a voto
+        min_pv = st.slider("Numero minimo di partite a voto (Pv)", min_value=1, max_value=38, value=20)
+
+    # Slider per numero di centrocampisti da visualizzare
+        num_centrocampisti = st.slider("Quanti centrocampisti vuoi visualizzare?", min_value=1, max_value=50, value=10)
+
+    # Filtra centrocampisti con almeno 'min_pv' partite
+        centrocampisti = df[(df['Ruolo'] == 'C') & (df['Pv'] >= min_pv)]
+
+    # Ordina per MV e FM e prendi i primi N
+        top_centrocampisti = centrocampisti.sort_values(by=["Mv", "Fm"], ascending=False).head(num_centrocampisti)
+
+    # Seleziona solo le colonne richieste
+        colonne_mostrate = ['Nome', 'Squadra', 'Mv', 'Fm', 'Gf', 'Ass','Rc','R+','R-', 'Amm', 'Esp', 'Pv']
+        st.dataframe(top_centrocampisti[colonne_mostrate].reset_index(drop=True))
+        
+    elif ruolo == "Attaccanti":
+        df = df["Attaccanti"]
+        st.subheader("⚽ Attaccanti per MV e FM")
+
+    # Slider per numero minimo di partite a voto
+        min_pv = st.slider("Numero minimo di partite a voto (Pv)", min_value=1, max_value=38, value=20)
+
+    # Slider per numero di attaccanti da visualizzare
+        num_attaccanti = st.slider("Quanti attaccanti vuoi visualizzare?", min_value=1, max_value=50, value=10)
+
+    # Filtra attaccanti con almeno 'min_pv' partite
+        attaccanti = df[(df['Ruolo'] == 'A') & (df['Pv'] >= min_pv)]
+
+    # Ordina per MV e FM e prendi i primi N
+        top_attaccanti = attaccanti.sort_values(by=["Mv", "Fm"], ascending=False).head(num_attaccanti)
+
+    # Seleziona solo le colonne richieste
+        colonne_mostrate = ['Nome', 'Squadra', 'Mv', 'Fm', 'Gf', 'Ass', 'Rc','R+','R-', 'Amm', 'Esp', 'Pv']
+        st.dataframe(top_attaccanti[colonne_mostrate].reset_index(drop=True))
+
+except FileNotFoundError:
+    st.error("⚠️ Il file 'Output_Fantacalcio_Classico.xlsx' non è stato trovato.")
+except Exception as e:
+    st.error(f"❌ Errore nel caricamento dei dati: {e}")
