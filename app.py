@@ -195,6 +195,7 @@ except FileNotFoundError:
 except Exception as e:
     st.error(f"❌ Errore nel caricamento dei dati: {e}")
 # 📌 Sezione Rigoristi
+
 st.header("🎯 Rigoristi delle Squadre")
 
 try:
@@ -214,8 +215,48 @@ try:
     styled_df = rigoristi_df.style.applymap(evidenzia_primo, subset=["Rigorista 1"])
     st.write("🎯 Tabella Rigoristi con evidenziazione del primo:")
     st.write(styled_df)
+    giocatori_possibili = pd.concat([
+        rigoristi_df["Rigorista 1"],
+        rigoristi_df["Rigorista 2"],
+        rigoristi_df["Rigorista 3"]
+    ]).dropna().unique().tolist()
 
+    if giocatori_possibili:
+        giocatore_scelto = st.selectbox("Seleziona un rigorista per vedere statistiche Rc / R+ / R-", giocatori_possibili)
+
+        # Carichiamo il file Output generale
+        df_stats_all = pd.read_excel("Output_Fantacalcio_Classico.xlsx", sheet_name=None)
+        df_unico = pd.concat(df_stats_all.values(), ignore_index=True)
+
+        # Cerchiamo il giocatore
+        dati_players = df_unico[df_unico["Nome"] == giocatore_scelto]
+
+        if not dati_players.empty:
+            # Estrazione valori (se non ci sono le colonne mette 0)
+            Rc = dati_players["Rc"].iloc[0] if "Rc" in dati_players.columns else 0
+            R_plus = dati_players["R+"].iloc[0] if "R+" in dati_players.columns else 0
+            R_minus = dati_players["R-"].iloc[0] if "R-" in dati_players.columns else 0
+
+            st.markdown(f"**{giocatore_scelto}** — Rc: {Rc}, R+: {R_plus}, R-: {R_minus}")
+
+            # GRAFICO
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots()
+            categorie = ["Rig. Calciati", "Rig. Segnati", "Rig. Sbagliati"]
+            valori = [Rc, R_plus, R_minus]
+            colori = ["#1f77b4", "green", "red"]
+
+            ax.bar(categorie, valori, color=colori)
+            ax.set_title(f"Statistiche rigori: {giocatore_scelto}")
+            st.pyplot(fig)
+
+        else:
+            st.info("Giocatore non trovato nelle statistiche dell'Output.")
+    else:
+        st.info("Nessun rigorista presente nella squadra selezionata.")
 except FileNotFoundError:
     st.warning("⚠️ Il file 'Rigoristi.xlsx' non è stato trovato.")
 except Exception as e:
     st.error(f"❌ Errore nel caricamento dei rigoristi: {e}")
+
