@@ -49,7 +49,12 @@ try:
             st.dataframe(risultati_df.reset_index(drop=True))
         else:
             st.info("Nessun giocatore trovato.")
+        easter_egg_images = {"Floriani Mussolini": "muss.jpg"}
 
+        for nome_intero, img_path in easter_egg_images.items():
+            if search_global.lower() in nome_intero.lower():
+                st.image(img_path,caption='BRAVISSIMO PRONIPOTE MIO! PORTA IN ALTO IL COGNOME!', use_container_width=True)
+                break
         st.stop()
 
     if fogli:
@@ -259,4 +264,5 @@ except FileNotFoundError:
     st.warning("⚠️ Il file 'Rigoristi.xlsx' non è stato trovato.")
 except Exception as e:
     st.error(f"❌ Errore nel caricamento dei rigoristi: {e}")
+
 
