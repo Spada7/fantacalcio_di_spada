@@ -264,6 +264,8 @@ except FileNotFoundError:
     st.warning("⚠️ Il file 'Rigoristi.xlsx' non è stato trovato.")
 except Exception as e:
     st.error(f"❌ Errore nel caricamento dei rigoristi: {e}")
+    
+#prob formazioni
 
 import pandas as pd
 import streamlit as st
@@ -271,30 +273,33 @@ import streamlit as st
 st.set_page_config(page_title="Probabili Formazioni", layout="centered")
 st.header("📋 Probabili Formazioni")
 
-# 🔄 Caricamento dati
+# 1️⃣ Caricamento Excel
 try:
     fogli = pd.read_excel("Output_Fantacalcio_Classico.xlsx", sheet_name=None)
-    tutte_squadre = set()
-
-    for nome_foglio, df in fogli.items():
-        if "Squadra" in df.columns:
-            squadre = df["Squadra"].dropna().astype(str).str.strip()
-            tutte_squadre.update(squadre)
-
-    tutte_squadre = sorted(list(tutte_squadre))
-
 except Exception as e:
-    st.error(f"❌ Errore nel caricamento del file Excel: {e}")
-    tutte_squadre = []
-
-# 🎯 Selezione squadra
-if tutte_squadre:
-    squadra_scelta = st.selectbox("Seleziona una squadra", tutte_squadre)
-else:
-    st.warning("⚠️ Nessuna squadra trovata.")
+    st.error(f"❌ Errore nel caricamento del file: {e}")
     st.stop()
 
-# 🖼️ Dizionario immagini
+# 2️⃣ Estrazione squadre
+tutte_squadre = set()
+for nome_foglio, df in fogli.items():
+    if "Squadra" in df.columns:
+        # Pulizia dei dati per evitare stringhe vuote o spazi strani
+        squadre = df["Squadra"].dropna().astype(str).str.strip()
+        squadre = [s for s in squadre if s]  # esclude stringhe vuote
+        tutte_squadre.update(squadre)
+
+tutte_squadre = sorted(list(tutte_squadre))
+
+# Se non ci sono squadre, avvisa e ferma
+if not tutte_squadre:
+    st.warning("⚠️ Nessuna squadra trovata nei dati.")
+    st.stop()
+
+# 3️⃣ Selectbox sempre visibile
+squadra_scelta = st.selectbox("Seleziona una squadra", ["TUTTI"] + tutte_squadre)
+
+# 4️⃣ Mappa immagini (stesse cartella del .py o in una cartella 'formazioni' nel repo)
 immagini_formazioni = {
     "Atalanta": "atalanta.png",
     "Bologna": "bologna.png",
@@ -318,13 +323,15 @@ immagini_formazioni = {
     "Verona": "verona.png"
 }
 
-# 📸 Visualizzazione immagine
-if squadra_scelta in immagini_formazioni:
+# 5️⃣ Mostra immagine se disponibile
+if squadra_scelta != "TUTTI" and squadra_scelta in immagini_formazioni:
     st.image(
         immagini_formazioni[squadra_scelta],
         caption=f"Probabile formazione {squadra_scelta}",
         use_container_width=True
     )
-else:
-    st.info(f"Nessuna immagine associata a {squadra_scelta}. Aggiungila al dizionario.")
+elif squadra_scelta != "TUTTI":
+    st.info(f"Nessuna immagine trovata per {squadra_scelta}.")
+dra_scelta}. Aggiungila al dizionario.")
+
 
