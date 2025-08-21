@@ -324,12 +324,16 @@ IMMAGINI_FORMAZIONI = {
 }
 
 def trova_immagine(squadra: str) -> str | None:
-    """Ritorna un percorso utilizzabile se il file esiste nella root o in 'formazioni/'."""
     nome_file = IMMAGINI_FORMAZIONI.get(squadra)
     if not nome_file:
         return None
-    candidati = [Path(nome_file), Path("formazioni") / nome_file]
+    BASE = Path(__file__).parent
+    candidati = [
+        BASE / nome_file,
+        BASE / "formazioni" / nome_file
+    ]
     for p in candidati:
+        st.write(f"🔍 Controllo: {p} → esiste? {p.is_file()}")
         if p.is_file():
             return str(p)
     return None
@@ -359,4 +363,5 @@ else:
         f"Nessuna immagine trovata per {squadra_scelta}. "
         f"Aggiungi '{atteso}' nella root del progetto o nella cartella 'formazioni/'."
     )
+
 
