@@ -274,6 +274,7 @@ import streamlit as st
 st.header("📋 Probabili Formazioni")
 
 try:
+    fogli = pd.read_excel("Output_Fantacalcio_Classico.xlsx", sheet_name=None)
     # Recupero squadre dal file di output
     tutte_squadre = set()
     for nome_foglio, df in fogli.items():
@@ -328,5 +329,6 @@ try:
 
 except Exception as e:
     st.error(f"Errore nelle probabili formazioni: {e}")
+
 
 
