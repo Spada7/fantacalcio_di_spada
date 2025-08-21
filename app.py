@@ -269,8 +269,13 @@ except Exception as e:
 
 #FORMAZIONI SQUADRE.
 import os
+
 st.header("Formazioni Squadre")
 st.markdown("### 🏷️ Seleziona la squadra")
+
+# Percorso assoluto alla cartella 'formazioni'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CARTELLA_FORMAZIONI = os.path.join(BASE_DIR, "formazioni")
 
 try:
     if "Squadra" in df.columns:
@@ -287,16 +292,16 @@ try:
         else:
             df_filtrato = df
 
-        
-
-        # Mostra immagini senza dizionario
+        # --- Funzione per mostrare immagine ---
         def mostra_img(nome_squadra):
-            # Normalizza il nome per creare il percorso
             nome_file = nome_squadra.strip().lower().replace(" ", "_") + ".png"
-            percorso = os.path.join("formazioni", nome_file)
+            percorso = os.path.join(CARTELLA_FORMAZIONI, nome_file)
             if os.path.exists(percorso):
                 st.image(percorso, caption=nome_squadra)
+            else:
+                st.warning(f"Immagine non trovata per: {nome_squadra}")
 
+        # --- Mostra immagini ---
         if squadra_scelta == "TUTTI":
             for sq in squadre:
                 mostra_img(sq)
@@ -305,5 +310,6 @@ try:
 
     else:
         st.info("ℹ️ Colonna 'Squadra' non presente nei dati correnti")
+
 except Exception as e:
-    st.warning(f"⚠️ Errore nel filtro per squadra: {e}")
+    st.error(f"❌ Errore nel filtro per squadra: {e}")
