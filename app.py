@@ -276,23 +276,22 @@ st.markdown("### 🏷️ Seleziona la squadra")
 # Percorso assoluto alla cartella 'formazioni'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CARTELLA_FORMAZIONI = os.path.join(BASE_DIR, "formazioni")
+# Debug: mostra cartella e file trovati
+if os.path.exists(CARTELLA_FORMAZIONI):
+    st.write("📂 Cartella formazioni:", CARTELLA_FORMAZIONI)
+    st.write("🖼️ File trovati:", os.listdir(CARTELLA_FORMAZIONI))
+else:
+    st.error("❌ Cartella 'formazioni' non trovata!")
 
 try:
     if "Squadra" in df.columns:
-        # Pulizia valori e preparazione lista
         df["Squadra"] = df["Squadra"].astype(str).str.strip()
         squadre = sorted(df["Squadra"].dropna().unique().tolist())
 
         opzioni_squadra = ["TUTTI"] + squadre
         squadra_scelta = st.selectbox("Filtra per squadra", opzioni_squadra)
 
-        # Filtra dati
-        if squadra_scelta != "TUTTI":
-            df_filtrato = df[df["Squadra"] == squadra_scelta]
-        else:
-            df_filtrato = df
-
-        # --- Funzione per mostrare immagine ---
+        # Funzione per mostrare l'immagine
         def mostra_img(nome_squadra):
             nome_file = nome_squadra.strip().lower().replace(" ", "_") + ".png"
             percorso = os.path.join(CARTELLA_FORMAZIONI, nome_file)
@@ -301,7 +300,7 @@ try:
             else:
                 st.warning(f"Immagine non trovata per: {nome_squadra}")
 
-        # --- Mostra immagini ---
+        # Mostra immagini in base alla selezione
         if squadra_scelta == "TUTTI":
             for sq in squadre:
                 mostra_img(sq)
@@ -312,4 +311,5 @@ try:
         st.info("ℹ️ Colonna 'Squadra' non presente nei dati correnti")
 
 except Exception as e:
-    st.error(f"❌ Errore nel filtro per squadra: {e}")
+    st.error(f"❌ Errore: {e}")
+
