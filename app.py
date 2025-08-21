@@ -269,38 +269,40 @@ except Exception as e:
 
 import pandas as pd
 import streamlit as st
+from pathlib import Path
 
 st.set_page_config(page_title="Probabili Formazioni", layout="centered")
 st.header("📋 Probabili Formazioni")
 
-# 1️⃣ Caricamento Excel
-try:
-    fogli = pd.read_excel("Output_Fantacalcio_Classico.xlsx", sheet_name=None)
-except Exception as e:
-    st.error(f"❌ Errore nel caricamento del file: {e}")
-    st.stop()
+EXCEL_PATH = "Output_Fantacalcio_Classico.xlsx"
 
-# 2️⃣ Estrazione squadre
-tutte_squadre = set()
-for nome_foglio, df in fogli.items():
-    if "Squadra" in df.columns:
-        # Pulizia dei dati per evitare stringhe vuote o spazi strani
-        squadre = df["Squadra"].dropna().astype(str).str.strip()
-        squadre = [s for s in squadre if s]  # esclude stringhe vuote
-        tutte_squadre.update(squadre)
+# ✅ Cache: evita riletture lente su Cloud
+@st.cache_data
+def load_sheets(path: str) -> dict:
+    return pd.read_excel(path, sheet_name=None)
 
-tutte_squadre = sorted(list(tutte_squadre))
+def estrai_squadre(fogli: dict) -> list:
+    squadre = set()
+    for df in fogli.values():
+        # colonna "Squadra" (case-insensitive, spazi rimossi)
+        colonne = [c for c in df.columns if str(c).strip().lower() == "squadra"]
+        if colonne:
+            col = colonne[0]
+            vals = (
+                df[col]
+                .dropna()
+                .astype(str)
+                .str.strip()
+                .replace({"": pd.NA})
+                .dropna()
+                .unique()
+                .tolist()
+            )
+            squadre.update(vals)
+    return sorted(squadre)
 
-# Se non ci sono squadre, avvisa e ferma
-if not tutte_squadre:
-    st.warning("⚠️ Nessuna squadra trovata nei dati.")
-    st.stop()
-
-# 3️⃣ Selectbox sempre visibile
-squadra_scelta = st.selectbox("Seleziona una squadra", ["TUTTI"] + tutte_squadre)
-
-# 4️⃣ Mappa immagini (stesse cartella del .py o in una cartella 'formazioni' nel repo)
-immagini_formazioni = {
+# Mappa immagini (nomi file esatti)
+IMMAGINI_FORMAZIONI = {
     "Atalanta": "atalanta.png",
     "Bologna": "bologna.png",
     "Cagliari": "cagliari.png",
@@ -320,18 +322,44 @@ immagini_formazioni = {
     "Sassuolo": "sassuolo.png",
     "Torino": "torino.png",
     "Udinese": "udinese.png",
-    "Verona": "verona.png"
+    "Verona": "verona.png",
 }
 
-# 5️⃣ Mostra immagine se disponibile
-if squadra_scelta != "TUTTI" and squadra_scelta in immagini_formazioni:
-    st.image(
-        immagini_formazioni[squadra_scelta],
-        caption=f"Probabile formazione {squadra_scelta}",
-        use_container_width=True
+def trova_immagine(squadra: str) -> str | None:
+    """Ritorna un percorso utilizzabile se il file esiste nella root o in 'formazioni/'."""
+    nome_file = IMMAGINI_FORMAZIONI.get(squadra)
+    if not nome_file:
+        return None
+    candidati = [Path(nome_file), Path("formazioni") / nome_file]
+    for p in candidati:
+        if p.is_file():
+            return str(p)
+    return None
+
+# 1) Carica dati
+try:
+    fogli = load_sheets(EXCEL_PATH)
+except Exception as e:
+    st.error(f"❌ Errore nel caricamento dell'Excel: {e}")
+    st.stop()
+
+# 2) Estrai e mostra selectbox (sempre visibile se ci sono squadre)
+squadre = estrai_squadre(fogli)
+if not squadre:
+    st.warning("⚠️ Nessuna squadra trovata nella colonna 'Squadra' dei fogli Excel.")
+    st.stop()
+
+squadra_scelta = st.selectbox("Seleziona una squadra", squadre, key="select_formazioni")
+
+# 3) Mostra immagine se presente (root o cartella 'formazioni')
+percorso_img = trova_immagine(squadra_scelta)
+if percorso_img:
+    st.image(percorso_img, caption=f"Probabile formazione {squadra_scelta}", use_container_width=True)
+else:
+    atteso = IMMAGINI_FORMAZIONI.get(squadra_scelta)
+    st.info(
+        f"Nessuna immagine trovata per {squadra_scelta}. "
+        f"Aggiungi '{atteso}' nella root del progetto o nella cartella 'formazioni/'."
     )
-elif squadra_scelta != "TUTTI":
-    st.info(f"Nessuna immagine trovata per {squadra_scelta}.")
-dra_scelta}. Aggiungila al dizionario.")
 
 
