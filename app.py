@@ -268,48 +268,34 @@ except Exception as e:
 
 
 #FORMAZIONI SQUADRE.
-import os
+
 
 st.header("Formazioni Squadre")
-st.markdown("### 🏷️ Seleziona la squadra")
+import base64
+from pathlib import Path
+import streamlit as st
 
-# Percorso assoluto alla cartella 'formazioni'
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CARTELLA_FORMAZIONI = os.path.join(BASE_DIR, "formazioni")
-# Debug: mostra cartella e file trovati
-if os.path.exists(CARTELLA_FORMAZIONI):
-    st.write("📂 Cartella formazioni:", CARTELLA_FORMAZIONI)
-    st.write("🖼️ File trovati:", os.listdir(CARTELLA_FORMAZIONI))
+PDF_PATH = Path(__file__).parent / "formazioni.pdf"
+
+@st.cache_data
+def _load_pdf_b64(path: Path) -> str:
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
+def mostra_pdf(path: Path):
+    b64 = _load_pdf_b64(path)
+    iframe = f"""
+        <iframe
+            src="data:application/pdf;base64,{b64}"
+            width="100%"
+            height="100%"
+            style="min-height: 90vh;"
+            type="application/pdf">
+        </iframe>
+    """
+    st.components.v1.html(iframe, height=900, scrolling=True)
+
+if PDF_PATH.is_file():
+    mostra_pdf(PDF_PATH)
 else:
-    st.error("❌ Cartella 'formazioni' non trovata!")
-
-try:
-    if "Squadra" in df.columns:
-        df["Squadra"] = df["Squadra"].astype(str).str.strip()
-        squadre = sorted(df["Squadra"].dropna().unique().tolist())
-
-        opzioni_squadra = ["TUTTI"] + squadre
-        squadra_scelta = st.selectbox("Filtra per squadra", opzioni_squadra)
-
-        # Funzione per mostrare l'immagine
-        def mostra_img(nome_squadra):
-            nome_file = nome_squadra.strip().lower().replace(" ", "_") + ".png"
-            percorso = os.path.join(CARTELLA_FORMAZIONI, nome_file)
-            if os.path.exists(percorso):
-                st.image(percorso, caption=nome_squadra)
-            else:
-                st.warning(f"Immagine non trovata per: {nome_squadra}")
-
-        # Mostra immagini in base alla selezione
-        if squadra_scelta == "TUTTI":
-            for sq in squadre:
-                mostra_img(sq)
-        else:
-            mostra_img(squadra_scelta)
-
-    else:
-        st.info("ℹ️ Colonna 'Squadra' non presente nei dati correnti")
-
-except Exception as e:
-    st.error(f"❌ Errore: {e}")
-
+    st.error(f"PDF non trovato: {PDF_PATH}")
