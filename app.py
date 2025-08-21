@@ -299,3 +299,64 @@ if PDF_PATH.is_file():
     mostra_pdf(PDF_PATH)
 else:
     st.error(f"PDF non trovato: {PDF_PATH}")
+# app.py
+from pathlib import Path
+import streamlit as st
+
+st.set_page_config(page_title="Formazioni Squadre", layout="wide")
+st.title("📸 Formazioni Squadre")
+
+# Cartella delle immagini (deve esistere ed essere commitata su GitHub)
+STATIC_DIR = Path(__file__).parent / "static"
+SUPPORTED_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+
+def _pretty_name(p: Path) -> str:
+    # Converte "hellas_verona.png" -> "Hellas Verona"
+    name = p.stem.replace("_", " ").replace("-", " ").strip()
+    # Capitalizza ogni parola lasciando intatti acronimi già maiuscoli
+    return " ".join(w if w.isupper() else w.capitalize() for w in name.split())
+
+@st.cache_data
+def load_images():
+    if not STATIC_DIR.exists():
+        return {}
+    files = [
+        p for p in STATIC_DIR.iterdir()
+        if p.is_file() and p.suffix.lower() in SUPPORTED_EXTS
+    ]
+    # Mappa: Nome squadra (display) -> Path file
+    return { _pretty_name(p): p for p in files }
+
+images = load_images()
+
+# Controlli di base
+if not STATIC_DIR.exists():
+    st.error(f"La cartella static non esiste: {STATIC_DIR.resolve()}")
+    st.stop()
+
+if not images:
+    st.warning("Nessuna immagine trovata in 'static/'. Aggiungi i file e fai push.")
+    with st.expander("Debug"):
+        st.write("Cartella:", STATIC_DIR.resolve())
+        st.write("Contenuto:", [p.name for p in STATIC_DIR.iterdir()] if STATIC_DIR.exists() else "—")
+    st.stop()
+
+# UI: selezione squadra
+nomi_squadre = sorted(images.keys())
+opzioni = ["TUTTI"] + nomi_squadre
+scelta = st.selectbox("Seleziona la squadra", opzioni)
+
+def show_image(name: str, path: Path):
+    st.image(path.as_posix(), caption=name, use_column_width=True)
+
+# Render
+if scelta == "TUTTI":
+    # Griglia a colonne
+    ncols = 3
+    cols = st.columns(ncols)
+    for i, name in enumerate(nomi_squadre):
+        with cols[i % ncols]:
+            show_image(name, images[name])
+else:
+    show_image(scelta, images[scelta])
+
