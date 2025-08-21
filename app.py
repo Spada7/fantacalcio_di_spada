@@ -265,23 +265,17 @@ except FileNotFoundError:
 except Exception as e:
     st.error(f"❌ Errore nel caricamento dei rigoristi: {e}")
 
-import os
-import streamlit as st
-
 import pandas as pd
 import streamlit as st
 
-# 📌 PROBABILI FORMAZIONI
-# ============================
-
+st.set_page_config(page_title="Probabili Formazioni", layout="centered")
 st.header("📋 Probabili Formazioni")
 
+# 🔄 Caricamento dati
 try:
-    # Carica tutti i fogli dal file Excel
     fogli = pd.read_excel("Output_Fantacalcio_Classico.xlsx", sheet_name=None)
-
-    # Recupero squadre dal file di output
     tutte_squadre = set()
+
     for nome_foglio, df in fogli.items():
         if "Squadra" in df.columns:
             squadre = df["Squadra"].dropna().astype(str).str.strip()
@@ -289,44 +283,48 @@ try:
 
     tutte_squadre = sorted(list(tutte_squadre))
 
-    # Selectbox per scegliere la squadra
-    squadra_scelta = st.selectbox("Seleziona una squadra", tutte_squadre)
-
-    # Dizionario immagini squadre (senza percorso cartella)
-    immagini_formazioni = {
-        "Atalanta": "atalanta.png",
-        "Bologna": "bologna.png",
-        "Cagliari": "cagliari.png",
-        "Como": "como.png",
-        "Cremonese": "cremonese.png",
-        "Fiorentina": "fiorentina.png",
-        "Genoa": "genoa.png",
-        "Inter": "inter.png",
-        "Juventus": "juventus.png",
-        "Lazio": "lazio.png",
-        "Lecce": "lecce.png",
-        "Milan": "milan.png",
-        "Napoli": "napoli.png",
-        "Parma": "parma.png",
-        "Pisa": "pisa.png",
-        "Roma": "roma.png",
-        "Sassuolo": "sassuolo.png",
-        "Torino": "torino.png",
-        "Udinese": "udinese.png",
-        "Verona": "verona.png"
-    }
-
-    # Mostra immagine se esiste nel dizionario
-    if squadra_scelta in immagini_formazioni:
-        st.image(
-            immagini_formazioni[squadra_scelta],
-            caption=f"Probabile formazione {squadra_scelta}",
-            use_container_width=True
-        )
-    else:
-        st.info(f"Nessuna immagine associata a {squadra_scelta}. Aggiungila al dizionario.")
-
 except Exception as e:
-    st.error(f"Errore nelle probabili formazioni: {e}")
+    st.error(f"❌ Errore nel caricamento del file Excel: {e}")
+    tutte_squadre = []
 
+# 🎯 Selezione squadra
+if tutte_squadre:
+    squadra_scelta = st.selectbox("Seleziona una squadra", tutte_squadre)
+else:
+    st.warning("⚠️ Nessuna squadra trovata.")
+    st.stop()
+
+# 🖼️ Dizionario immagini
+immagini_formazioni = {
+    "Atalanta": "atalanta.png",
+    "Bologna": "bologna.png",
+    "Cagliari": "cagliari.png",
+    "Como": "como.png",
+    "Cremonese": "cremonese.png",
+    "Fiorentina": "fiorentina.png",
+    "Genoa": "genoa.png",
+    "Inter": "inter.png",
+    "Juventus": "juventus.png",
+    "Lazio": "lazio.png",
+    "Lecce": "lecce.png",
+    "Milan": "milan.png",
+    "Napoli": "napoli.png",
+    "Parma": "parma.png",
+    "Pisa": "pisa.png",
+    "Roma": "roma.png",
+    "Sassuolo": "sassuolo.png",
+    "Torino": "torino.png",
+    "Udinese": "udinese.png",
+    "Verona": "verona.png"
+}
+
+# 📸 Visualizzazione immagine
+if squadra_scelta in immagini_formazioni:
+    st.image(
+        immagini_formazioni[squadra_scelta],
+        caption=f"Probabile formazione {squadra_scelta}",
+        use_container_width=True
+    )
+else:
+    st.info(f"Nessuna immagine associata a {squadra_scelta}. Aggiungila al dizionario.")
 
