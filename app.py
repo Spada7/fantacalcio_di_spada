@@ -265,3 +265,45 @@ except FileNotFoundError:
 except Exception as e:
     st.error(f"❌ Errore nel caricamento dei rigoristi: {e}")
     
+
+
+#FORMAZIONI SQUADRE.
+import os
+st.header("Formazioni Squadre")
+st.markdown("### 🏷️ Seleziona la squadra")
+
+try:
+    if "Squadra" in df.columns:
+        # Pulizia valori e preparazione lista
+        df["Squadra"] = df["Squadra"].astype(str).str.strip()
+        squadre = sorted(df["Squadra"].dropna().unique().tolist())
+
+        opzioni_squadra = ["TUTTI"] + squadre
+        squadra_scelta = st.selectbox("Filtra per squadra", opzioni_squadra)
+
+        # Filtra dati
+        if squadra_scelta != "TUTTI":
+            df_filtrato = df[df["Squadra"] == squadra_scelta]
+        else:
+            df_filtrato = df
+
+        
+
+        # Mostra immagini senza dizionario
+        def mostra_img(nome_squadra):
+            # Normalizza il nome per creare il percorso
+            nome_file = nome_squadra.strip().lower().replace(" ", "_") + ".png"
+            percorso = os.path.join("formazioni", nome_file)
+            if os.path.exists(percorso):
+                st.image(percorso, caption=nome_squadra)
+
+        if squadra_scelta == "TUTTI":
+            for sq in squadre:
+                mostra_img(sq)
+        else:
+            mostra_img(squadra_scelta)
+
+    else:
+        st.info("ℹ️ Colonna 'Squadra' non presente nei dati correnti")
+except Exception as e:
+    st.warning(f"⚠️ Errore nel filtro per squadra: {e}")
