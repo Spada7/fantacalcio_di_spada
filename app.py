@@ -268,23 +268,31 @@ except Exception as e:
 import os
 import streamlit as st
 
+import pandas as pd
+import streamlit as st
+
 # 📌 PROBABILI FORMAZIONI
 # ============================
 
 st.header("📋 Probabili Formazioni")
 
 try:
+    # Carica tutti i fogli dal file Excel
     fogli = pd.read_excel("Output_Fantacalcio_Classico.xlsx", sheet_name=None)
+
     # Recupero squadre dal file di output
     tutte_squadre = set()
     for nome_foglio, df in fogli.items():
         if "Squadra" in df.columns:
-            tutte_squadre.update(df["Squadra"].dropna().unique().tolist())
+            squadre = df["Squadra"].dropna().astype(str).str.strip()
+            tutte_squadre.update(squadre)
+
     tutte_squadre = sorted(list(tutte_squadre))
 
-    squadra_scelta = st.selectbox("Seleziona una squadra", tutte_squadre)    
+    # Selectbox per scegliere la squadra
+    squadra_scelta = st.selectbox("Seleziona una squadra", tutte_squadre)
 
-    # Dizionario immagini squadre
+    # Dizionario immagini squadre (senza percorso cartella)
     immagini_formazioni = {
         "Atalanta": "atalanta.png",
         "Bologna": "bologna.png",
@@ -308,27 +316,17 @@ try:
         "Verona": "verona.png"
     }
 
-    # Percorso cartella immagini
-    cartella_img = "formazioni"
-
-    # Mostra immagine se esiste nel dizionario e nel filesystem
+    # Mostra immagine se esiste nel dizionario
     if squadra_scelta in immagini_formazioni:
-        percorso_img = os.path.join(cartella_img, immagini_formazioni[squadra_scelta])
-        percorso_img = os.path.normpath(percorso_img)  # normalizza il path
-
-        if os.path.exists(percorso_img):
-            st.image(
-                percorso_img,
-                caption=f"Probabile formazione {squadra_scelta}",
-                use_container_width=True
-            )
-        else:
-            st.warning(f"⚠️ Immagine non trovata: {percorso_img}")
+        st.image(
+            immagini_formazioni[squadra_scelta],
+            caption=f"Probabile formazione {squadra_scelta}",
+            use_container_width=True
+        )
     else:
         st.info(f"Nessuna immagine associata a {squadra_scelta}. Aggiungila al dizionario.")
 
 except Exception as e:
     st.error(f"Errore nelle probabili formazioni: {e}")
-
 
 
