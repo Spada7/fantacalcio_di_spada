@@ -265,4 +265,63 @@ except FileNotFoundError:
 except Exception as e:
     st.error(f"❌ Errore nel caricamento dei rigoristi: {e}")
 
+# 📌 PROBABILI FORMAZIONI
+# ============================
+
+st.header("📋 Probabili Formazioni")
+
+try:
+    # Recupero squadre dal file di output
+    tutte_squadre = set()
+    for nome_foglio, df in fogli.items():
+        if "Squadra" in df.columns:
+            tutte_squadre.update(df["Squadra"].dropna().unique().tolist())
+    tutte_squadre = sorted(list(tutte_squadre))
+
+    
+    squadra_scelta = st.selectbox("Seleziona una squadra", tutte_squadre)    
+
+    # Dizionario immagini squadre
+    immagini_formazioni = {
+        "Atalanta": "formazioni/atalanta.png",
+        "Bologna": "formazioni/bologna.png",
+        "Cagliari": "formazioni/cagliari.png",
+        "Como": "formazioni/como.png",
+        "Cremonese": "formazioni/cremonese.png",
+        "Fiorentina": "formazioni/fiorentina.png",
+        "Genoa": "formazioni/genoa.png",
+        "Inter": "formazioni/inter.png",
+        "Juventus": "formazioni/juventus.png",
+        "Lazio": "formazioni/lazio.png",
+        "Lecce": "formazioni/lecce.png",
+        "Milan": "formazioni/milan.png",
+        "Napoli": "formazioni/napoli.png",
+        "Parma": "formazioni/parma.png",
+        "Pisa": "formazioni/pisa.png",
+        "Roma": "formazioni/roma.png",
+        "Sassuolo": "formazioni/sassuolo.png",
+        "Torino": "formazioni/torino.png",
+        "Udinese": "formazioni/udinese.png",
+        "Verona": "formazioni/verona.png"
+        }
+
+    # Mostra immagine se esiste nel dizionario
+    if squadra_scelta in immagini_formazioni:
+        try:
+            st.image(
+                immagini_formazioni[squadra_scelta],
+                caption=f"Probabile formazione {squadra_scelta}",
+                use_container_width=True
+            )
+        except Exception:
+            st.warning(f"⚠️ Immagine non trovata per {squadra_scelta}.")
+    else:
+        st.info(f"Nessuna immagine associata a {squadra_scelta}. Aggiungila al dizionario.")
+
+except Exception as e:
+    st.error(f"Errore nelle probabili formazioni: {e}")
+
+
+
+
 
